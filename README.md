@@ -11,6 +11,8 @@
 - [ ] Printing/Reporting of background processes, (including jobs command)
 - [ ] Allow file redirection (> and <)
 - [ ] Allow (1) pipe redirection
+
 ###### Extras ===
+
 - [ ] Allow multiple (2+) pipe chaining.
 - [ ] Implementation of kill command to signal background processes
