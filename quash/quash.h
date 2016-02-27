@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <unistd.h>
+#include <strings.h>
 
 /**
  * Specify the maximum number of characters accepted by the command string
@@ -72,5 +73,15 @@ void change_dir(char* path);
  *  @return - An array of tokens and number of tokens in nTkns
  */
 char** tokenize(char* input, int* nTkns);
+
+/**
+ *  Set environment variables such as HOME or PATH.
+ *
+ *  @param var - envrionment variable to set, can be anything
+ *  @param val - the value that should be set for var
+ *
+*/
+void set_var(char* var, char* val);
+
 
 #endif // QUASH_H

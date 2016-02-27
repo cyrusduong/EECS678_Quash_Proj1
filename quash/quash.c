@@ -108,7 +108,8 @@ char** tokenize(char *input, int* nTkns) {
 
     //Place token into array of tokens to return
     retTokens[nSpaces-1] = tok;
-    // No new input just parse rest of input from earlier
+    // No new input just parse rest of input from earlier,
+    // also use = as delimiter for set function.
     tok = strtok(NULL, " =");
   }
 
@@ -121,7 +122,43 @@ char** tokenize(char *input, int* nTkns) {
   return retTokens;
 }
 
+void set_var(char* var, char* val) {
+  if (var != NULL && val != NULL) {
+    if ( setenv(var, val, 0) == -1 ) {
+      printf("'%s'\n", strerror(errno));
+    }
 
+    char* envVal = getenv(var);
+    //Check if set correctly, notify user if so
+    if (strcmp(val, envVal) == 0) {
+      printf("%s successfully set to %s\n", var, envVal);
+    } else {
+      printf("%s is set to %s\n", var, envVal);
+      printf("Would you like to overwrite this value? (y/n): ");
+
+      char input = 0;
+      input = getchar();
+      while( !( input == 'y' || input == 'n' ) ) {
+        printf("Please input either y or n: ");
+        input = getchar();
+      }
+
+      if ( input == 'y' ) {
+        if ( setenv(var, val, 1) == -1 ) {
+          printf("'%s'\n", strerror(errno));
+        }
+        envVal = getenv(var);
+        if (strcmp(val, envVal) == 0) {
+          printf("%s successfully set to %s\n", var, envVal);
+        }
+      } else {
+        printf("%s left set to %s\n", var, envVal);
+      }
+      //Eat \n from buffer to not be read by parser
+      input = getchar();
+    }
+  }
+}
 /**
  * Quash entry point
  *
@@ -156,6 +193,8 @@ int main(int argc, char** argv) {
       printf("%s\n", myCwd);
     } else if (!strcmp(cmd.cmdstr, "cd")) {
       change_dir(cmd.args[1]);
+    } else if (!strcmp(cmd.cmdstr, "set")) {
+      set_var(cmd.args[1], cmd.args[2]);
     } else {
       puts(cmd.cmdstr); // Echo the input string
     }
