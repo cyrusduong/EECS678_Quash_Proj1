@@ -54,8 +54,11 @@ void terminate() {
 }
 
 bool get_command(command_t* cmd, FILE* in) {
+  //Grab current working directory
+  getcwd(myCwd, 1024); //Find path upto 1024.
   //Command Indicator
-  printf("> ");
+  printf("%s > ", myCwd);
+
   if (fgets(cmd->cmdstr, MAX_COMMAND_LENGTH, in) != NULL) {
     size_t len = strlen(cmd->cmdstr);
     char last_char = cmd->cmdstr[len - 1];
@@ -64,15 +67,60 @@ bool get_command(command_t* cmd, FILE* in) {
       // Remove trailing new line character.
       cmd->cmdstr[len - 1] = '\0';
       cmd->cmdlen = len - 1;
-    }
-    else
+    } else {
       cmd->cmdlen = len;
+    }
+
+    //Tokenize and place into args of the command_t.
+    //    - Pass &nArgs to recieve correct number of tokens
+    cmd->args = tokenize(cmd->cmdstr, &cmd->nArgs);
 
     return true;
   }
   else
     return false;
 }
+
+void change_dir(char* path) {
+  //Nice one liner that sets appropriate directory
+  if ( ((!path) ? chdir(envHome) : chdir(path)) == -1 )
+    printf("'%s'\n", strerror(errno));
+}
+
+char** tokenize(char *input, int* nTkns) {
+  size_t nSpaces = 0;
+  char **retTokens = NULL;
+  char* tok = strtok(input, " ");
+  while (tok) {
+    //Reallocate memory based on # of tokens
+    retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
+    //Check to see if allocation failed
+    if (retTokens == NULL) {
+      printf("\nMALLOC FAIL FOR COMMAND '%s'\n", input);
+      return retTokens;
+    }
+
+    //If token is a string put string into retTokens and remove "quotes".
+  	if (tok[0] == '"') {
+  		++tok;
+  		sprintf(tok, "%s%s%s", tok, " ", strtok(NULL, "\""));
+  	}
+
+    //Place token into array of tokens to return
+    retTokens[nSpaces-1] = tok;
+    // No new input just parse rest of input from earlier
+    tok = strtok(NULL, " =");
+  }
+
+  //Set nTkns to correct # of tokens
+  *nTkns = nSpaces;
+
+  retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
+  retTokens[nSpaces-1] = 0;
+
+  return retTokens;
+}
+
 
 /**
  * Quash entry point
@@ -93,7 +141,6 @@ int main(int argc, char** argv) {
   envHome = getenv("HOME");
   envUser = getenv("USER");
   envPath = getenv("PATH");
-  getcwd(myCwd, 1024); //Find path upto 1024.
 
   // Main execution loop
   while (is_running() && get_command(&cmd, stdin)) {
@@ -107,6 +154,8 @@ int main(int argc, char** argv) {
       terminate(); // Quit Quash
     } else if (!strcmp(cmd.cmdstr, "pwd")) {
       printf("%s\n", myCwd);
+    } else if (!strcmp(cmd.cmdstr, "cd")) {
+      change_dir(cmd.args[1]);
     } else {
       puts(cmd.cmdstr); // Echo the input string
     }
