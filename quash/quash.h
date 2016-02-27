@@ -15,7 +15,10 @@
 #include <sys/types.h>
 #include <strings.h>
 #include <sys/wait.h>
+<<<<<<< HEAD
 #include <sys/mman.h>
+=======
+>>>>>>> refs/remotes/origin/run-in-background
 
 /**
  * Specify the maximum number of characters accepted by the command string
@@ -69,7 +72,11 @@ bool get_command(command_t* cmd, FILE* in);
  *
  *  @param cmd - a command_t structure that indicates the command and params
  */
+<<<<<<< HEAD
 void exec_cmd(command_t cmd);
+=======
+void exec_cmd(command_t* cmd);
+>>>>>>> refs/remotes/origin/run-in-background
 
 /**
  *  Change location of working directory using cd
@@ -105,6 +112,7 @@ void set_var(char* var, char* val);
 void echo_var(char* var);
 
 /**
+<<<<<<< HEAD
  *  Run external commands/programs with or without parameters
  *
  * @ param cmd - The entire command variable
@@ -112,13 +120,19 @@ void echo_var(char* var);
 void exec_extern(command_t cmd);
 
 /**
+=======
+>>>>>>> refs/remotes/origin/run-in-background
  *  Runs an executable in background while adding it to the jobs list
  *  Keeps track of background process.
  *
  *  @param cmd - name of the variable to retrieve
  *
 */
+<<<<<<< HEAD
 void run_in_background(command_t cmd);
+=======
+void run_in_background(command_t* cmd);
+>>>>>>> refs/remotes/origin/run-in-background
 
 /**
  *  Prints the jobs in background
