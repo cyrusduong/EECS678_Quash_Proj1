@@ -109,6 +109,8 @@ void echo_var(char* var);
  * @ param cmd - The entire command variable
 */
 void exec_extern(command_t cmd);
+
+/**
  *  Runs an executable in background while adding it to the jobs list
  *  Keeps track of background process.
  *

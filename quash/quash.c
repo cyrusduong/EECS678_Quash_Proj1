@@ -222,6 +222,10 @@ void exec_extern(command_t cmd) {
 
     if (status == 1) {
       fprintf(stderr, "%s", "Error");
+    }
+  }
+}
+
 void run_in_background(command_t* cmd) {
   pid_t pid, sid;
   pid = fork();
