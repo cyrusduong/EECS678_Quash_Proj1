@@ -105,19 +105,19 @@ void exec_cmd(command_t cmd) {
     cmd.args[cmd.nArgs-1] = "";
     --cmd.nArgs;
     run_in_background(cmd);
-  } else if (!strcmp(cmd->cmdstr, "exit")) {
+  } else if (!strcmp(cmd.cmdstr, "exit")) {
     terminate(); // Exit Quash
-  } else if (!strcmp(cmd->cmdstr, "quit")) {
+  } else if (!strcmp(cmd.cmdstr, "quit")) {
     terminate(); // Quit Quash
-  } else if (!strcmp(cmd->cmdstr, "pwd")) {
+  } else if (!strcmp(cmd.cmdstr, "pwd")) {
     printf("%s\n", myCwd);
-  } else if (!strcmp(cmd->cmdstr, "cd")) {
-    change_dir(cmd->args[1]);
-  } else if (!strcmp(cmd->cmdstr, "set")) {
-    set_var(cmd->args[1], cmd->args[2]);
-  } else if (!strcmp(cmd->cmdstr, "echo")) {
-    echo_var(cmd->args[1]);
-  } else if (!strcmp(cmd->cmdstr, "jobs")) {
+  } else if (!strcmp(cmd.cmdstr, "cd")) {
+    change_dir(cmd.args[1]);
+  } else if (!strcmp(cmd.cmdstr, "set")) {
+    set_var(cmd.args[1], cmd.args[2]);
+  } else if (!strcmp(cmd.cmdstr, "echo")) {
+    echo_var(cmd.args[1]);
+  } else if (!strcmp(cmd.cmdstr, "jobs")) {
     printJobs();
   } else {
     exec_extern(cmd);
