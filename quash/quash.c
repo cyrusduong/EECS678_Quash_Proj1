@@ -109,15 +109,17 @@ char** tokenize(char *input, int* nTkns) {
     //Place token into array of tokens to return
     retTokens[nSpaces-1] = tok;
     // No new input just parse rest of input from earlier,
-    // also use = as delimiter for set function.
-    tok = strtok(NULL, " =");
+    // use = as delimiter for set function.
+    // use $ as delimiter for echo variables
+    tok = strtok(NULL, " =$");
   }
 
   //Set nTkns to correct # of tokens
   *nTkns = nSpaces;
 
-  retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
-  retTokens[nSpaces-1] = 0;
+  // Cyrus - Took out because seemed unnecessary
+  // retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
+  // retTokens[nSpaces-1] = 0;
 
   return retTokens;
 }
@@ -159,6 +161,16 @@ void set_var(char* var, char* val) {
     }
   }
 }
+
+void echo_var(char* var) {
+  char* envVal = getenv(var);
+  if (envVal == NULL) {
+    printf("Variable has not been set or does not exist\n");
+  } else {
+    printf("%s\n", envVal);
+  }
+}
+
 /**
  * Quash entry point
  *
@@ -195,6 +207,8 @@ int main(int argc, char** argv) {
       change_dir(cmd.args[1]);
     } else if (!strcmp(cmd.cmdstr, "set")) {
       set_var(cmd.args[1], cmd.args[2]);
+    } else if (!strcmp(cmd.cmdstr, "echo")) {
+      echo_var(cmd.args[1]);
     } else {
       puts(cmd.cmdstr); // Echo the input string
     }

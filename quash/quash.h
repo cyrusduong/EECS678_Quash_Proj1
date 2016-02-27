@@ -83,5 +83,13 @@ char** tokenize(char* input, int* nTkns);
 */
 void set_var(char* var, char* val);
 
+/**
+ *  Gets the environment variables such as HOME or PATH.
+ *
+ *  @param var - name of the variable to retrieve
+ *
+*/
+void echo_var(char* var);
+
 
 #endif // QUASH_H
