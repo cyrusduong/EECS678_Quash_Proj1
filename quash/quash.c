@@ -99,19 +99,11 @@ void change_dir(char* path) {
     printf("'%s'\n", strerror(errno));
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 void exec_cmd(command_t cmd) {
   if (!strcmp(cmd.args[cmd.nArgs-1], "&")) {
     //Parse out '&'
     cmd.args[cmd.nArgs-1] = "";
     --cmd.nArgs;
-=======
-void exec_cmd(command_t* cmd) {
-  if (cmd->args[cmd->nArgs] == '&') {
-    //'Parse' out '&'
-    cmd->nArgs = cmd->nArgs - 1;
->>>>>>> parent of 4d332fe... run-in-background
     run_in_background(cmd);
   } else if (!strcmp(cmd->cmdstr, "exit")) {
     terminate(); // Exit Quash
@@ -128,34 +120,7 @@ void exec_cmd(command_t* cmd) {
   } else if (!strcmp(cmd->cmdstr, "jobs")) {
     printJobs();
   } else {
-<<<<<<< HEAD
     exec_extern(cmd);
-=======
-void exec_cmd(command_t* cmd) {
-  if (cmd->args[cmd->nArgs] == '&') {
-    //'Parse' out '&'
-    cmd->nArgs = cmd->nArgs - 1;
-    run_in_background(cmd);
-  } else if (!strcmp(cmd->cmdstr, "exit")) {
-    terminate(); // Exit Quash
-  } else if (!strcmp(cmd->cmdstr, "quit")) {
-    terminate(); // Quit Quash
-  } else if (!strcmp(cmd->cmdstr, "pwd")) {
-    printf("%s\n", myCwd);
-  } else if (!strcmp(cmd->cmdstr, "cd")) {
-    change_dir(cmd->args[1]);
-  } else if (!strcmp(cmd->cmdstr, "set")) {
-    set_var(cmd->args[1], cmd->args[2]);
-  } else if (!strcmp(cmd->cmdstr, "echo")) {
-    echo_var(cmd->args[1]);
-  } else if (!strcmp(cmd->cmdstr, "jobs")) {
-    printJobs();
-  } else {
-    exec_extern(&cmd);
->>>>>>> refs/remotes/origin/run-in-background
-=======
-    exec_extern(&cmd);
->>>>>>> parent of 4d332fe... run-in-background
   }
 }
 
@@ -243,7 +208,6 @@ void echo_var(char* var) {
   }
 }
 
-<<<<<<< HEAD
 void exec_extern(command_t cmd) {
   pid_t pid = fork();
   int status;
@@ -263,14 +227,7 @@ void exec_extern(command_t cmd) {
   }
 }
 
-<<<<<<< HEAD
 void run_in_background(command_t cmd) {
-=======
-void run_in_background(command_t* cmd) {
->>>>>>> refs/remotes/origin/run-in-background
-=======
-void run_in_background(command_t* cmd) {
->>>>>>> parent of 4d332fe... run-in-background
   pid_t pid, sid;
   pid = fork();
 
@@ -282,56 +239,24 @@ void run_in_background(command_t* cmd) {
       exit(EXIT_FAILURE);
     }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     printf("[%d] %d is running in the background\n", *nJobs, getpid());
     printf("%s has %u args\n", cmd.cmdstr, cmd.nArgs);
-=======
-    printf("[%d] %d is running in the background\n", getpid(), *nJobs);
->>>>>>> refs/remotes/origin/run-in-background
-=======
-    printf("[%d] %d is running in the background\n", getpid(), *nJobs);
->>>>>>> parent of 4d332fe... run-in-background
     exec_cmd(cmd);
     printf("\n[%d] finished\n", getpid());
 
     kill(getpid(), -9); //KILL SIG 9
-<<<<<<< HEAD
-<<<<<<< HEAD
     exit(0);
-=======
-    exit(EXIT_SUCCESS);
->>>>>>> refs/remotes/origin/run-in-background
-=======
-    exit(EXIT_SUCCESS);
->>>>>>> parent of 4d332fe... run-in-background
   } else {
     struct job currentJob = {
   		.jid = pid,
   		.pid = *nJobs,
-<<<<<<< HEAD
-<<<<<<< HEAD
   		.com = cmd.args[0]
-=======
-  		.com = cmd->cmdstr
->>>>>>> refs/remotes/origin/run-in-background
-=======
-  		.com = cmd->cmdstr
->>>>>>> parent of 4d332fe... run-in-background
   	};
 
     jobs[*nJobs] = currentJob;
     *nJobs = *nJobs + 1;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     while(waitid(P_PID, pid, NULL, WEXITED | WNOHANG) > 0) {}
-=======
-    while(waitid(pid, NULL, WEXITED | WNOHANG) > 0) {}
->>>>>>> refs/remotes/origin/run-in-background
-=======
-    while(waitid(pid, NULL, WEXITED | WNOHANG) > 0) {}
->>>>>>> parent of 4d332fe... run-in-background
   }
 }
 
@@ -365,12 +290,8 @@ int main(int argc, char** argv) {
     envUser = getenv("USER");
     envPath = getenv("PATH");
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     exec_cmd(cmd);
-=======
-=======
->>>>>>> parent of 4d332fe... run-in-background
+
     // The commands should be parsed, then executed.
     if (!strcmp(cmd.cmdstr, "exit")) {
       terminate(); // Exit Quash
@@ -385,14 +306,8 @@ int main(int argc, char** argv) {
     } else if (!strcmp(cmd.cmdstr, "echo")) {
       echo_var(cmd.args[1]);
     } else {
-<<<<<<< HEAD
-      puts(cmd.cmdstr); // Echo the input string
-    }
->>>>>>> refs/remotes/origin/run-in-background
-=======
       exec_extern(cmd);
     }
->>>>>>> parent of 4d332fe... run-in-background
   }
 
   return EXIT_SUCCESS;
