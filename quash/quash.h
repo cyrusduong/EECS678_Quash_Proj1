@@ -112,5 +112,10 @@ void echo_var(char* var);
 */
 void run_in_background(command_t* cmd);
 
+/**
+ *  Prints the jobs in background
+*/
+void printJobs();
+
 
 #endif // QUASH_H

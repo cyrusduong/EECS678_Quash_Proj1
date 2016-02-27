@@ -114,6 +114,8 @@ void exec_cmd(command_t* cmd) {
     set_var(cmd->args[1], cmd->args[2]);
   } else if (!strcmp(cmd->cmdstr, "echo")) {
     echo_var(cmd->args[1]);
+  } else if (!strcmp(cmd->cmdstr, "jobs")) {
+    printJobs();
   } else {
     exec_extern(&cmd);
   }
@@ -232,6 +234,14 @@ void run_in_background(command_t* cmd) {
     *nJobs = *nJobs + 1;
 
     while(waitid(pid, NULL, WEXITED | WNOHANG) > 0) {}
+  }
+}
+
+void printJobs() {
+  for (size_t i = 0; i < *nJobs; ++i) {
+    if (kill(jobs[i].pid, 0) == 0) {
+      printf("[%d]\t%d\t%s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
+    }
   }
 }
 
