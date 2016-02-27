@@ -10,11 +10,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <errno.h>
+#include <unistd.h>
 
 /**
  * Specify the maximum number of characters accepted by the command string
  */
-#define MAX_COMMAND_LENGTH (1024)
+#define MAX_COMMAND_LENGTH (4096)
 
 /**
  * Holds information about a command.
@@ -27,7 +29,9 @@ typedef struct command_t {
                                    ///< robustness.
   size_t cmdlen;                   ///< length of the cmdstr character buffer
 
-  // Extend with more fields if needed
+  // Extended with args to tokenize into
+  char** args; //Memory will be realloc'ed as needed.
+  int nArgs;
 } command_t;
 
 /**
@@ -52,5 +56,21 @@ void terminate();
  *  @return True if able to fill #command_t.cmdstr and false otherwise
  */
 bool get_command(command_t* cmd, FILE* in);
+
+/**
+ *  Change location of working directory using cd
+ *
+ *  @param path - path of the new working directory
+ */
+void change_dir(char* path);
+
+/**
+ *  Break a string into its token parts
+ *
+ *  @param input - the string to tokenize
+ *  @param nTkns - a integer that is modified when tokenizing
+ *  @return - An array of tokens and number of tokens in nTkns
+ */
+char** tokenize(char* input, int* nTkns);
 
 #endif // QUASH_H

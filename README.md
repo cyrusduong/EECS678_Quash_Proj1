@@ -3,8 +3,8 @@
 - [ ] Run executables without arguments
 - [ ] Run executables with arguments
 - [ ] set system variables such as HOME and PATH to work properly
-- [ ] Quit shell using quit or exit
-- [ ] Implemented cd and pwd
+- [x] Quit shell using quit or exit
+- [x] Implemented cd and pwd
 - [ ] PATH works properly, gives error when executable is not found.
 - [ ] Child process inheritance (inherit environment variables)
 - [ ] Allow background execution using (&)

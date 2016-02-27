@@ -24,6 +24,14 @@
 // to private in other languages.
 static bool running;
 
+//Define buffer for current working directory
+char myCwd[1024];
+
+//Define buffer for environment variables
+char *envHome;
+char *envUser;
+char *envPath;
+
 /**************************************************************************
  * Private Functions
  **************************************************************************/
@@ -46,6 +54,11 @@ void terminate() {
 }
 
 bool get_command(command_t* cmd, FILE* in) {
+  //Grab current working directory
+  getcwd(myCwd, 1024); //Find path upto 1024.
+  //Command Indicator
+  printf("%s > ", myCwd);
+
   if (fgets(cmd->cmdstr, MAX_COMMAND_LENGTH, in) != NULL) {
     size_t len = strlen(cmd->cmdstr);
     char last_char = cmd->cmdstr[len - 1];
@@ -54,15 +67,60 @@ bool get_command(command_t* cmd, FILE* in) {
       // Remove trailing new line character.
       cmd->cmdstr[len - 1] = '\0';
       cmd->cmdlen = len - 1;
-    }
-    else
+    } else {
       cmd->cmdlen = len;
+    }
+
+    //Tokenize and place into args of the command_t.
+    //    - Pass &nArgs to recieve correct number of tokens
+    cmd->args = tokenize(cmd->cmdstr, &cmd->nArgs);
 
     return true;
   }
   else
     return false;
 }
+
+void change_dir(char* path) {
+  //Nice one liner that sets appropriate directory
+  if ( ((!path) ? chdir(envHome) : chdir(path)) == -1 )
+    printf("'%s'\n", strerror(errno));
+}
+
+char** tokenize(char *input, int* nTkns) {
+  size_t nSpaces = 0;
+  char **retTokens = NULL;
+  char* tok = strtok(input, " ");
+  while (tok) {
+    //Reallocate memory based on # of tokens
+    retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
+    //Check to see if allocation failed
+    if (retTokens == NULL) {
+      printf("\nMALLOC FAIL FOR COMMAND '%s'\n", input);
+      return retTokens;
+    }
+
+    //If token is a string put string into retTokens and remove "quotes".
+  	if (tok[0] == '"') {
+  		++tok;
+  		sprintf(tok, "%s%s%s", tok, " ", strtok(NULL, "\""));
+  	}
+
+    //Place token into array of tokens to return
+    retTokens[nSpaces-1] = tok;
+    // No new input just parse rest of input from earlier
+    tok = strtok(NULL, " =");
+  }
+
+  //Set nTkns to correct # of tokens
+  *nTkns = nSpaces;
+
+  retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
+  retTokens[nSpaces-1] = 0;
+
+  return retTokens;
+}
+
 
 /**
  * Quash entry point
@@ -79,18 +137,28 @@ int main(int argc, char** argv) {
   puts("Welcome to Quash!");
   puts("Type \"exit\" or \"quit\" to quit");
 
+  // Get environment variables
+  envHome = getenv("HOME");
+  envUser = getenv("USER");
+  envPath = getenv("PATH");
+
   // Main execution loop
   while (is_running() && get_command(&cmd, stdin)) {
     // NOTE: I would not recommend keeping anything inside the body of
     // this while loop. It is just an example.
 
     // The commands should be parsed, then executed.
-    if (!strcmp(cmd.cmdstr, "exit"))
+    if (!strcmp(cmd.cmdstr, "exit")) {
       terminate(); // Exit Quash
-    else if (!strcmp(cmd.cmdstr, "quit"))
+    } else if (!strcmp(cmd.cmdstr, "quit")) {
       terminate(); // Quit Quash
-    else
+    } else if (!strcmp(cmd.cmdstr, "pwd")) {
+      printf("%s\n", myCwd);
+    } else if (!strcmp(cmd.cmdstr, "cd")) {
+      change_dir(cmd.args[1]);
+    } else {
       puts(cmd.cmdstr); // Echo the input string
+    }
   }
 
   return EXIT_SUCCESS;
