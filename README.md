@@ -1,5 +1,7 @@
 # EECS678_Quash_Proj1
 
+Written by Cyrus Duong and Alvin Cheung
+
 - [ ] Run executables without arguments
 - [ ] Run executables with arguments
 - [ ] set system variables such as HOME and PATH to work properly
@@ -12,7 +14,7 @@
 - [ ] Allow file redirection (> and <)
 - [ ] Allow (1) pipe redirection
 
-###### Extras ===
+###### Extras
 
 - [ ] Allow multiple (2+) pipe chaining.
 - [ ] Implementation of kill command to signal background processes
