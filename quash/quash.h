@@ -91,5 +91,12 @@ void set_var(char* var, char* val);
 */
 void echo_var(char* var);
 
+/**
+ *  Run external commands/programs with or without parameters
+ *
+ * @ param cmd - The entire command variable
+*/
+void exec_extern(command_t cmd);
+
 
 #endif // QUASH_H
