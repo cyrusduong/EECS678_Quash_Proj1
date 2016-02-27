@@ -2,12 +2,12 @@
 
 Written by Cyrus Duong and Alvin Cheung
 
-- [ ] Run executables without arguments
-- [ ] Run executables with arguments
-- [ ] set system variables such as HOME and PATH to work properly
+- [x] Run executables without arguments
+- [x] Run executables with arguments
+- [x] set system variables such as HOME and PATH to work properly
 - [x] Quit shell using quit or exit
 - [x] Implemented cd and pwd
-- [ ] PATH works properly, gives error when executable is not found.
+- [x] PATH works properly, gives error when executable is not found.
 - [ ] Child process inheritance (inherit environment variables)
 - [ ] Allow background execution using (&)
 - [ ] Printing/Reporting of background processes, (including jobs command)
