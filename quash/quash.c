@@ -99,10 +99,11 @@ void change_dir(char* path) {
     printf("'%s'\n", strerror(errno));
 }
 
-void exec_cmd(command_t* cmd) {
-  if (cmd->args[cmd->nArgs] == '&') {
-    //'Parse' out '&'
-    cmd->nArgs = cmd->nArgs - 1;
+void exec_cmd(command_t cmd) {
+  if (!strcmp(cmd.args[cmd.nArgs-1], "&")) {
+    //Parse out '&'
+    cmd.args[cmd.nArgs-1] = "";
+    --cmd.nArgs;
     run_in_background(cmd);
   } else if (!strcmp(cmd->cmdstr, "exit")) {
     terminate(); // Exit Quash
@@ -119,7 +120,7 @@ void exec_cmd(command_t* cmd) {
   } else if (!strcmp(cmd->cmdstr, "jobs")) {
     printJobs();
   } else {
-    exec_extern(&cmd);
+    exec_extern(cmd);
   }
 }
 
@@ -226,7 +227,7 @@ void exec_extern(command_t cmd) {
   }
 }
 
-void run_in_background(command_t* cmd) {
+void run_in_background(command_t cmd) {
   pid_t pid, sid;
   pid = fork();
 
@@ -238,23 +239,24 @@ void run_in_background(command_t* cmd) {
       exit(EXIT_FAILURE);
     }
 
-    printf("[%d] %d is running in the background\n", getpid(), *nJobs);
+    printf("[%d] %d is running in the background\n", *nJobs, getpid());
+    printf("%s has %u args\n", cmd.cmdstr, cmd.nArgs);
     exec_cmd(cmd);
     printf("\n[%d] finished\n", getpid());
 
     kill(getpid(), -9); //KILL SIG 9
-    exit(EXIT_SUCCESS);
+    exit(0);
   } else {
     struct job currentJob = {
   		.jid = pid,
   		.pid = *nJobs,
-  		.com = cmd->cmdstr
+  		.com = cmd.args[0]
   	};
 
     jobs[*nJobs] = currentJob;
     *nJobs = *nJobs + 1;
 
-    while(waitid(pid, NULL, WEXITED | WNOHANG) > 0) {}
+    while(waitid(P_PID, pid, NULL, WEXITED | WNOHANG) > 0) {}
   }
 }
 
@@ -287,6 +289,8 @@ int main(int argc, char** argv) {
     envHome = getenv("HOME");
     envUser = getenv("USER");
     envPath = getenv("PATH");
+
+    exec_cmd(cmd);
 
     // The commands should be parsed, then executed.
     if (!strcmp(cmd.cmdstr, "exit")) {
