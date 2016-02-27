@@ -11,6 +11,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+//Get current working directory - getcwd();
+#include <unistd.h>
+
 /**
  * Specify the maximum number of characters accepted by the command string
  */

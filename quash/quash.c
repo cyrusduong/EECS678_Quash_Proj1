@@ -24,6 +24,14 @@
 // to private in other languages.
 static bool running;
 
+//Define buffer for current working directory
+char myCwd[1024];
+
+//Define buffer for environment variables
+char *envHome;
+char *envUser;
+char *envPath;
+
 /**************************************************************************
  * Private Functions
  **************************************************************************/
@@ -46,6 +54,8 @@ void terminate() {
 }
 
 bool get_command(command_t* cmd, FILE* in) {
+  //Command Indicator
+  printf("> ");
   if (fgets(cmd->cmdstr, MAX_COMMAND_LENGTH, in) != NULL) {
     size_t len = strlen(cmd->cmdstr);
     char last_char = cmd->cmdstr[len - 1];
@@ -79,18 +89,27 @@ int main(int argc, char** argv) {
   puts("Welcome to Quash!");
   puts("Type \"exit\" or \"quit\" to quit");
 
+  // Get environment variables
+  envHome = getenv("HOME");
+  envUser = getenv("USER");
+  envPath = getenv("PATH");
+  getcwd(myCwd, 1024); //Find path upto 1024.
+
   // Main execution loop
   while (is_running() && get_command(&cmd, stdin)) {
     // NOTE: I would not recommend keeping anything inside the body of
     // this while loop. It is just an example.
 
     // The commands should be parsed, then executed.
-    if (!strcmp(cmd.cmdstr, "exit"))
+    if (!strcmp(cmd.cmdstr, "exit")) {
       terminate(); // Exit Quash
-    else if (!strcmp(cmd.cmdstr, "quit"))
+    } else if (!strcmp(cmd.cmdstr, "quit")) {
       terminate(); // Quit Quash
-    else
+    } else if (!strcmp(cmd.cmdstr, "pwd")) {
+      printf("%s\n", myCwd);
+    } else {
       puts(cmd.cmdstr); // Echo the input string
+    }
   }
 
   return EXIT_SUCCESS;
