@@ -32,6 +32,16 @@ char *envHome;
 char *envUser;
 char *envPath;
 
+//Define structure of a job
+struct job {
+    int jid;
+    int pid;
+    char *com;
+};
+//Define jobList
+struct job jobs[MAX_BG_JOBS];
+int *nJobs;
+
 /**************************************************************************
  * Private Functions
  **************************************************************************/
@@ -85,6 +95,28 @@ void change_dir(char* path) {
   //Nice one liner that sets appropriate directory
   if ( ((!path) ? chdir(envHome) : chdir(path)) == -1 )
     printf("'%s'\n", strerror(errno));
+}
+
+void exec_cmd(command_t* cmd) {
+  if (cmd->args[cmd->nArgs] == '&') {
+    //'Parse' out '&'
+    cmd->nArgs = cmd->nArgs - 1;
+    run_in_background(cmd);
+  } else if (!strcmp(cmd->cmdstr, "exit")) {
+    terminate(); // Exit Quash
+  } else if (!strcmp(cmd->cmdstr, "quit")) {
+    terminate(); // Quit Quash
+  } else if (!strcmp(cmd->cmdstr, "pwd")) {
+    printf("%s\n", myCwd);
+  } else if (!strcmp(cmd->cmdstr, "cd")) {
+    change_dir(cmd->args[1]);
+  } else if (!strcmp(cmd->cmdstr, "set")) {
+    set_var(cmd->args[1], cmd->args[2]);
+  } else if (!strcmp(cmd->cmdstr, "echo")) {
+    echo_var(cmd->args[1]);
+  } else {
+    exec_extern(&cmd);
+  }
 }
 
 char** tokenize(char *input, int* nTkns) {
@@ -171,6 +203,38 @@ void echo_var(char* var) {
   }
 }
 
+void run_in_background(command_t* cmd) {
+  pid_t pid, sid;
+  pid = fork();
+
+  if (pid == 0) {
+    sid = setsid();
+
+    if (sid < 0) {
+      printf("Failed to create child process\n");
+      exit(EXIT_FAILURE);
+    }
+
+    printf("[%d] %d is running in the background\n", getpid(), *nJobs);
+    exec_cmd(cmd);
+    printf("\n[%d] finished\n", getpid());
+
+    kill(getpid(), -9); //KILL SIG 9
+    exit(EXIT_SUCCESS);
+  } else {
+    struct job currentJob = {
+  		.jid = pid,
+  		.pid = *nJobs,
+  		.com = cmd->cmdstr
+  	};
+
+    jobs[*nJobs] = currentJob;
+    *nJobs = *nJobs + 1;
+
+    while(waitid(pid, NULL, WEXITED | WNOHANG) > 0) {}
+  }
+}
+
 /**
  * Quash entry point
  *
@@ -186,15 +250,12 @@ int main(int argc, char** argv) {
   puts("Welcome to Quash!");
   puts("Type \"exit\" or \"quit\" to quit");
 
-  // Get environment variables
-  envHome = getenv("HOME");
-  envUser = getenv("USER");
-  envPath = getenv("PATH");
-
   // Main execution loop
   while (is_running() && get_command(&cmd, stdin)) {
-    // NOTE: I would not recommend keeping anything inside the body of
-    // this while loop. It is just an example.
+    // Get environment variables
+    envHome = getenv("HOME");
+    envUser = getenv("USER");
+    envPath = getenv("PATH");
 
     // The commands should be parsed, then executed.
     if (!strcmp(cmd.cmdstr, "exit")) {
