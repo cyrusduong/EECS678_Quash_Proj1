@@ -12,12 +12,17 @@
 #include <stdbool.h>
 #include <errno.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include <strings.h>
+#include <sys/wait.h>
 
 /**
  * Specify the maximum number of characters accepted by the command string
  */
 #define MAX_COMMAND_LENGTH (4096)
+
+//Specify maximum number of background jobs allowed
+#define MAX_BG_JOBS (64)
 
 /**
  * Holds information about a command.
@@ -59,6 +64,13 @@ void terminate();
 bool get_command(command_t* cmd, FILE* in);
 
 /**
+ *  Runs the user input command.
+ *
+ *  @param cmd - a command_t structure that indicates the command and params
+ */
+void exec_cmd(command_t* cmd);
+
+/**
  *  Change location of working directory using cd
  *
  *  @param path - path of the new working directory
@@ -97,6 +109,18 @@ void echo_var(char* var);
  * @ param cmd - The entire command variable
 */
 void exec_extern(command_t cmd);
+ *  Runs an executable in background while adding it to the jobs list
+ *  Keeps track of background process.
+ *
+ *  @param cmd - name of the variable to retrieve
+ *
+*/
+void run_in_background(command_t* cmd);
+
+/**
+ *  Prints the jobs in background
+*/
+void printJobs();
 
 
 #endif // QUASH_H
