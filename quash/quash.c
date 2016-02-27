@@ -12,6 +12,8 @@
                    // contained.
 
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 /**************************************************************************
  * Private Variables
@@ -171,6 +173,25 @@ void echo_var(char* var) {
   }
 }
 
+void exec_extern(command_t cmd) {
+  pid_t pid = fork();
+  int status;
+
+  if (pid == 0) {
+    // Any number of arguments can be taken
+    if (execvp(cmd.args[0], cmd.args) < 0) {
+      printf("%s: No such file, directory, or command\n", cmd.args[0]);
+      exit(-1);
+    }
+  } else {
+    waitpid(pid, &status, 0);
+
+    if (status == 1) {
+      fprintf(stderr, "%s", "Error");
+    }
+  }
+}
+
 /**
  * Quash entry point
  *
@@ -210,7 +231,7 @@ int main(int argc, char** argv) {
     } else if (!strcmp(cmd.cmdstr, "echo")) {
       echo_var(cmd.args[1]);
     } else {
-      puts(cmd.cmdstr); // Echo the input string
+      exec_extern(cmd);
     }
   }
 
