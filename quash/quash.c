@@ -52,6 +52,8 @@ int *nJobs;
  */
 static void start() {
   running = true;
+  nJobs = mmap(NULL, sizeof *nJobs, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  *nJobs = 0;
 }
 
 /**************************************************************************
@@ -99,27 +101,28 @@ void change_dir(char* path) {
     printf("'%s'\n", strerror(errno));
 }
 
-void exec_cmd(command_t* cmd) {
-  if (cmd->args[cmd->nArgs] == '&') {
-    //'Parse' out '&'
-    cmd->nArgs = cmd->nArgs - 1;
+void exec_cmd(command_t cmd) {
+  if (!strcmp(cmd.args[cmd.nArgs-1], "&")) {
+    //Parse out '&'
+    cmd.args[cmd.nArgs-1] = "";
+    --cmd.nArgs;
     run_in_background(cmd);
-  } else if (!strcmp(cmd->cmdstr, "exit")) {
+  } else if (!strcmp(cmd.cmdstr, "exit")) {
     terminate(); // Exit Quash
-  } else if (!strcmp(cmd->cmdstr, "quit")) {
+  } else if (!strcmp(cmd.cmdstr, "quit")) {
     terminate(); // Quit Quash
-  } else if (!strcmp(cmd->cmdstr, "pwd")) {
+  } else if (!strcmp(cmd.cmdstr, "pwd")) {
     printf("%s\n", myCwd);
-  } else if (!strcmp(cmd->cmdstr, "cd")) {
-    change_dir(cmd->args[1]);
-  } else if (!strcmp(cmd->cmdstr, "set")) {
-    set_var(cmd->args[1], cmd->args[2]);
-  } else if (!strcmp(cmd->cmdstr, "echo")) {
-    echo_var(cmd->args[1]);
-  } else if (!strcmp(cmd->cmdstr, "jobs")) {
+  } else if (!strcmp(cmd.cmdstr, "cd")) {
+    change_dir(cmd.args[1]);
+  } else if (!strcmp(cmd.cmdstr, "set")) {
+    set_var(cmd.args[1], cmd.args[2]);
+  } else if (!strcmp(cmd.cmdstr, "echo")) {
+    echo_var(cmd.args[1]);
+  } else if (!strcmp(cmd.cmdstr, "jobs")) {
     printJobs();
   } else {
-    exec_extern(&cmd);
+    exec_extern(cmd);
   }
 }
 
@@ -132,7 +135,7 @@ char** tokenize(char *input, int* nTkns) {
     retTokens = realloc( retTokens, sizeof(char*) * ++nSpaces);
     //Check to see if allocation failed
     if (retTokens == NULL) {
-      printf("\nMALLOC FAIL FOR COMMAND '%s'\n", input);
+      printf("\nmalloc fail for command '%s'\n", input);
       return retTokens;
     }
 
@@ -226,7 +229,7 @@ void exec_extern(command_t cmd) {
   }
 }
 
-void run_in_background(command_t* cmd) {
+void run_in_background(command_t cmd) {
   pid_t pid, sid;
   pid = fork();
 
@@ -238,23 +241,24 @@ void run_in_background(command_t* cmd) {
       exit(EXIT_FAILURE);
     }
 
-    printf("[%d] %d is running in the background\n", getpid(), *nJobs);
+    printf("[%d] %d is running in the background\n", *nJobs, getpid());
+    printf("%s has %u args\n", cmd.cmdstr, cmd.nArgs);
     exec_cmd(cmd);
     printf("\n[%d] finished\n", getpid());
 
     kill(getpid(), -9); //KILL SIG 9
-    exit(EXIT_SUCCESS);
+    exit(0);
   } else {
     struct job currentJob = {
   		.jid = pid,
   		.pid = *nJobs,
-  		.com = cmd->cmdstr
+  		.com = cmd.args[0]
   	};
 
     jobs[*nJobs] = currentJob;
     *nJobs = *nJobs + 1;
 
-    while(waitid(pid, NULL, WEXITED | WNOHANG) > 0) {}
+    while(waitid(P_PID, pid, NULL, WEXITED | WNOHANG) > 0) {}
   }
 }
 
@@ -288,23 +292,10 @@ int main(int argc, char** argv) {
     envUser = getenv("USER");
     envPath = getenv("PATH");
 
-    // The commands should be parsed, then executed.
-    if (!strcmp(cmd.cmdstr, "exit")) {
-      terminate(); // Exit Quash
-    } else if (!strcmp(cmd.cmdstr, "quit")) {
-      terminate(); // Quit Quash
-    } else if (!strcmp(cmd.cmdstr, "pwd")) {
-      printf("%s\n", myCwd);
-    } else if (!strcmp(cmd.cmdstr, "cd")) {
-      change_dir(cmd.args[1]);
-    } else if (!strcmp(cmd.cmdstr, "set")) {
-      set_var(cmd.args[1], cmd.args[2]);
-    } else if (!strcmp(cmd.cmdstr, "echo")) {
-      echo_var(cmd.args[1]);
-    } else {
-      exec_extern(cmd);
-    }
+    exec_cmd(cmd);
   }
+
+
 
   return EXIT_SUCCESS;
 }
