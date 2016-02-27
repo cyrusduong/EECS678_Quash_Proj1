@@ -291,5 +291,6 @@ int main(int argc, char** argv) {
     envPath = getenv("PATH");
 
     exec_cmd(cmd);
+  }
   return EXIT_SUCCESS;
 }
