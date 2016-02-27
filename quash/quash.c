@@ -6,7 +6,7 @@
 
 /**************************************************************************
  * Included Files
- **************************************************************************/ 
+ **************************************************************************/
 #include "quash.h" // Putting this above the other includes allows us to ensure
                    // this file's headder's #include statements are self
                    // contained.
@@ -25,7 +25,7 @@
 static bool running;
 
 /**************************************************************************
- * Private Functions 
+ * Private Functions
  **************************************************************************/
 /**
  * Start the main loop by setting the running flag to true
@@ -35,7 +35,7 @@ static void start() {
 }
 
 /**************************************************************************
- * Public Functions 
+ * Public Functions
  **************************************************************************/
 bool is_running() {
   return running;
@@ -57,7 +57,7 @@ bool get_command(command_t* cmd, FILE* in) {
     }
     else
       cmd->cmdlen = len;
-    
+
     return true;
   }
   else
@@ -71,13 +71,13 @@ bool get_command(command_t* cmd, FILE* in) {
  * @param argv argument vector from the command line
  * @return program exit status
  */
-int main(int argc, char** argv) { 
+int main(int argc, char** argv) {
   command_t cmd; //< Command holder argument
-  
+
   start();
-  
+
   puts("Welcome to Quash!");
-  puts("Type \"exit\" to quit");
+  puts("Type \"exit\" or \"quit\" to quit");
 
   // Main execution loop
   while (is_running() && get_command(&cmd, stdin)) {
@@ -87,7 +87,9 @@ int main(int argc, char** argv) {
     // The commands should be parsed, then executed.
     if (!strcmp(cmd.cmdstr, "exit"))
       terminate(); // Exit Quash
-    else 
+    else if (!strcmp(cmd.cmdstr, "quit"))
+      terminate(); // Quit Quash
+    else
       puts(cmd.cmdstr); // Echo the input string
   }
 
