@@ -16,9 +16,12 @@
 #include <strings.h>
 #include <sys/wait.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include <sys/mman.h>
 =======
 >>>>>>> refs/remotes/origin/run-in-background
+=======
+>>>>>>> parent of 4d332fe... run-in-background
 
 /**
  * Specify the maximum number of characters accepted by the command string
@@ -73,10 +76,14 @@ bool get_command(command_t* cmd, FILE* in);
  *  @param cmd - a command_t structure that indicates the command and params
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 void exec_cmd(command_t cmd);
 =======
 void exec_cmd(command_t* cmd);
 >>>>>>> refs/remotes/origin/run-in-background
+=======
+void exec_cmd(command_t* cmd);
+>>>>>>> parent of 4d332fe... run-in-background
 
 /**
  *  Change location of working directory using cd
@@ -129,10 +136,14 @@ void exec_extern(command_t cmd);
  *
 */
 <<<<<<< HEAD
+<<<<<<< HEAD
 void run_in_background(command_t cmd);
 =======
 void run_in_background(command_t* cmd);
 >>>>>>> refs/remotes/origin/run-in-background
+=======
+void run_in_background(command_t* cmd);
+>>>>>>> parent of 4d332fe... run-in-background
 
 /**
  *  Prints the jobs in background
