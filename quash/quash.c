@@ -52,6 +52,9 @@ int *nJobs;
  */
 static void start() {
   running = true;
+
+  nJobs = mmap(NULL, sizeof *nJobs, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+  *nJobs = 0;
 }
 
 /**************************************************************************
