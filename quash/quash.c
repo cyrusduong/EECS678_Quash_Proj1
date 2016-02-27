@@ -291,24 +291,5 @@ int main(int argc, char** argv) {
     envPath = getenv("PATH");
 
     exec_cmd(cmd);
-
-    // The commands should be parsed, then executed.
-    if (!strcmp(cmd.cmdstr, "exit")) {
-      terminate(); // Exit Quash
-    } else if (!strcmp(cmd.cmdstr, "quit")) {
-      terminate(); // Quit Quash
-    } else if (!strcmp(cmd.cmdstr, "pwd")) {
-      printf("%s\n", myCwd);
-    } else if (!strcmp(cmd.cmdstr, "cd")) {
-      change_dir(cmd.args[1]);
-    } else if (!strcmp(cmd.cmdstr, "set")) {
-      set_var(cmd.args[1], cmd.args[2]);
-    } else if (!strcmp(cmd.cmdstr, "echo")) {
-      echo_var(cmd.args[1]);
-    } else {
-      exec_extern(cmd);
-    }
-  }
-
   return EXIT_SUCCESS;
 }
