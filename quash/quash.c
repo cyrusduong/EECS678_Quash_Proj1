@@ -103,10 +103,19 @@ void change_dir(char* path) {
 }
 
 void exec_cmd(command_t cmd) {
+  int redirectFlag = 0;
+  int pipeFlag = 0;
+  int redirLoc = 0;
+
   for (int i = 0; i < cmd.nArgs; i++) {
     if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
-      file_redirection(cmd);
-      return;
+      redirectFlag = 1;
+      redirLoc = i;
+      break;
+    } else if (!strcmp(cmd.args[i], "|")) {
+      pipeFlag = 1;
+      redirLoc = i;
+      break;
     }
   }
 
@@ -115,6 +124,10 @@ void exec_cmd(command_t cmd) {
     cmd.args[cmd.nArgs-1] = "";
     --cmd.nArgs;
     run_in_background(cmd);
+  } else if (redirectFlag) {
+    file_redirection(cmd, redirLoc);
+  } else if (pipeFlag) {
+    pipe_execution(cmd, redirLoc);
   } else if (!strcmp(cmd.cmdstr, "exit")) {
     terminate(); // Exit Quash
   } else if (!strcmp(cmd.cmdstr, "quit")) {
@@ -304,19 +317,12 @@ void kill_ps(char* sig, char* pid) {
   }
 }
 
-void file_redirection(command_t cmd) {
-  size_t redirLoc = 0;
-
-  // Find index of > or <
-  for (int i = 0; i < cmd.nArgs; i++) {
-    if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
-      redirLoc = i;
-    }
-  }
-
+void file_redirection(command_t cmd, int redirLoc) {
+  char** lhsTokens = NULL;
+  char** rhsTokens = NULL;
   // Allocate space for copy of lhsTokens and rhsTokens
-  char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
-  char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+  lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
 
   // Set the tokens in first half to lhsTokens - upto <, >
   for (size_t i = 0; i < redirLoc; i++) {
@@ -362,6 +368,74 @@ void file_redirection(command_t cmd) {
     if (status == 1) {
       fprintf(stderr, "%s", "Error");
     }
+  }
+}
+
+void pipe_execution(command_t cmd, int redirLoc) {
+  char** lhsTokens = NULL;
+  char** rhsTokens = NULL;
+  // Allocate space for copy of lhsTokens and rhsTokens
+  lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+
+  // Set the tokens in first half to lhsTokens - upto <, >
+  for (size_t i = 0; i < redirLoc; i++) {
+    lhsTokens[i] = cmd.args[i];
+  }
+
+  // Set the tokens in latter half to rhsTokens - past <, >
+  int j = 0;
+  for (size_t i = redirLoc + 1; i < cmd.nArgs; i++) {
+    //Copy command string into jobmak
+    rhsTokens[j] = (char*) malloc((strlen(cmd.args[i]) + 1) * sizeof(char));
+    strcpy(rhsTokens[j], cmd.args[i]);
+    j++;
+  }
+
+  struct command_t rhsCommand = {
+    .cmdstr = rhsTokens[0],
+    .args = rhsTokens,
+    .nArgs = (cmd.nArgs - redirLoc - 1)
+  };
+
+  strcpy(rhsCommand.cmdstr, rhsTokens[0]);
+
+  pid_t pid_1, pid_2;
+  int fd[2], status;
+
+  pipe(fd);
+  pid_1 = fork();
+  if (pid_1 == 0) {
+    dup2(fd[1], STDOUT_FILENO);
+    close(fd[0]);
+    close(fd[1]);
+
+    // Execute the program
+    if (execvp(lhsTokens[0], lhsTokens) < 0) {
+      printf("%s: No such file, directory, or command\n", lhsTokens[0]);
+      exit(-1);
+    }
+    exit(0);
+  }
+
+  pid_2 = fork();
+  if (pid_2 == 0) {
+    dup2(fd[0], STDIN_FILENO);
+    close(fd[0]);
+    close(fd[1]);
+
+    fflush(stdout);
+    exec_cmd(rhsCommand);
+    exit(0);
+  }
+  close(fd[0]);
+  close(fd[1]);
+
+  if ((waitpid(pid_1, &status, 0)) == -1) {
+    fprintf(stderr, "Process 1 Encountered an Error%d\n", errno);
+  }
+  if ((waitpid(pid_2, &status, 0)) == -1) {
+    fprintf(stderr, "Process 2 Encountered an Error%d\n", errno);
   }
 }
 
