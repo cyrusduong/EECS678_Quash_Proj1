@@ -42,7 +42,7 @@ struct job {
 };
 //Define jobList
 struct job jobs[MAX_BG_JOBS];
-int *nJobs;
+int nJobs;
 
 /**************************************************************************
  * Private Functions
@@ -52,9 +52,7 @@ int *nJobs;
  */
 static void start() {
   running = true;
-
-  nJobs = mmap(NULL, sizeof *nJobs, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-  *nJobs = 0;
+  nJobs = 0;
 }
 
 /**************************************************************************
@@ -233,7 +231,6 @@ void exec_extern(command_t cmd) {
 void run_in_background(command_t cmd) {
   pid_t pid, sid;
   pid = fork();
-
   if (pid == 0) {
     sid = setsid();
 
@@ -241,37 +238,40 @@ void run_in_background(command_t cmd) {
       printf("Failed to create child process\n");
       exit(EXIT_FAILURE);
     }
-
-    printf("\n[%d] %d is running in the background\n", getpid(), *nJobs);
-    exec_cmd(cmd);
-    printf("\n[%d] finished\n\n", getpid());
-
-    //Refresh prompt
+    //Read currentDir
     getcwd(myCwd, 1024); //Find path upto 1024.
-    //Command Indicator
-    printf("%s > ", myCwd);
+
+    printf("\n\n[%d] %d %s is running in the background\n", getpid(), nJobs, cmd.args[0]);
+    exec_cmd(cmd);
+    printf("\n\n[%d] %d %s finished\n\n%s > ", getpid(), nJobs, cmd.args[0], myCwd);
 
     kill(getpid(), -9); //KILL SIG 9
     exit(0);
   } else {
+    //Copy command string into job
+    char* cmdCopy = NULL;
+    cmdCopy = (char*) malloc((strlen(cmd.args[0]) + 1) * sizeof(char));
+    strcpy(cmdCopy, cmd.args[0]);
     struct job currentJob = {
   		.jid = pid,
-  		.pid = *nJobs,
-  		.com = cmd.args[0]
+  		.pid = nJobs,
+  		.com = cmdCopy
   	};
 
-    jobs[*nJobs] = currentJob;
-    *nJobs = *nJobs + 1;
+    jobs[nJobs] = currentJob;
+    nJobs = nJobs + 1;
 
     while(waitid(P_PID, pid, NULL, WEXITED | WNOHANG) > 0) {}
   }
 }
 
 void printJobs() {
-  for (size_t i = 0; i < *nJobs; ++i) {
-    if (kill(jobs[i].pid, 0) == 0) {
+  printf("[PID #]\tJID# CMD\n");
+  for (size_t i = 0; i < nJobs; ++i) {
+    // TODO: Commented because does not properly check for running processes
+    //       Better to print all (inc. zombie) processes.
+    // if (kill(jobs[i].jid, 0) == i)
       printf("[%d]  %d  %s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
-    }
   }
 }
 
