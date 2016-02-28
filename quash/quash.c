@@ -14,6 +14,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /**************************************************************************
  * Private Variables
@@ -293,6 +295,49 @@ void kill_ps(char* pid) {
     }
   }
 }
+
+void file_redirection(command_t cmd) {
+  int flag = 0;
+  char* current_cmd = strdup(*cmd.args);
+  char* first_arg = NULL;
+
+  if (!strcmp(cmd.args[2], ">")) {
+    flag = 1;
+    first_arg = strtok(current_cmd, ">");
+  } else if (!strcmp(cmd.args[2], "<")) {
+    flag = 0;
+    first_arg = strtok(current_cmd, "<");
+  }
+
+  char* second_arg = strtok(NULL, "\n");
+  
+  pid_t pid;
+  pid = fork();
+  int fd1, fd2;
+  if (pid < 0) {
+    //error
+  }
+  else if (pid == 0) {
+    if (flag) { // >
+      fd1 = open(first_arg, O_RDONLY, 0);
+      dup2(fd1, STDIN_FILENO);
+      close(fd1);
+    }
+
+    if (!flag) { // <
+      fd2 = creat(second_arg, O_RDWR);
+      dup2(fd2, STDOUT_FILENO);
+      close(fd2);
+    }
+
+    execvp(cmd.args[0], cmd.args);
+    exit(1);
+  } else {
+    // Wait for child to DIE. DIEEE!
+    while(waitid(P_PID, pid, NULL, WEXITED | WNOHANG) > 0) {}
+  }
+}
+
 
 /**
  * Quash entry point
