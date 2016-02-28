@@ -397,7 +397,7 @@ void pipe_execution(command_t cmd, int redirLoc) {
   struct command_t rhsCommand = {
     .cmdstr = rhsTokens[0],
     .args = rhsTokens,
-    .nArgs = (cmd.nArgs - redirLoc)
+    .nArgs = (cmd.nArgs - redirLoc - 1)
   };
 
   strcpy(rhsCommand.cmdstr, rhsTokens[0]);
@@ -427,11 +427,11 @@ void pipe_execution(command_t cmd, int redirLoc) {
     close(fd[1]);
 
     fflush(stdout);
-    if (execvp(rhsTokens[0], rhsTokens) < 0) {
-      printf("%s: No such file, directory, or command\n", rhsTokens[0]);
-      exit(-1);
-    }
-    //exec_cmd(rhsCommand);
+    // if (execvp(rhsTokens[0], rhsTokens) < 0) {
+    //   printf("%s: No such file, directory, or command\n", rhsTokens[0]);
+    //   exit(-1);
+    // }
+    exec_cmd(rhsCommand);
     exit(0);
   }
   close(fd[0]);
