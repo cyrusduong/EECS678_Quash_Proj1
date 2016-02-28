@@ -16,6 +16,7 @@
 #include <strings.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
+#include <inttypes.h>
 
 
 /**
@@ -127,7 +128,12 @@ void run_in_background(command_t cmd);
 /**
  *  Prints the jobs in background
 */
-void printJobs();
+void print_jobs();
+
+/**
+ *  Kills the jobs by PID in background
+*/
+void kill_ps(char* pid);
 
 
 #endif // QUASH_H

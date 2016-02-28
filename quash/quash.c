@@ -119,7 +119,9 @@ void exec_cmd(command_t cmd) {
   } else if (!strcmp(cmd.cmdstr, "echo")) {
     echo_var(cmd.args[1]);
   } else if (!strcmp(cmd.cmdstr, "jobs")) {
-    printJobs();
+    print_jobs();
+  } else if (!strcmp(cmd.cmdstr, "kill")) {
+    kill_ps(cmd.args[1]);
   } else {
     exec_extern(cmd);
   }
@@ -241,11 +243,13 @@ void run_in_background(command_t cmd) {
     //Read currentDir
     getcwd(myCwd, 1024); //Find path upto 1024.
 
-    printf("\n\n[%d] %d %s is running in the background\n", getpid(), nJobs, cmd.args[0]);
+    printf("\n\n[%d] %d %s - running. Prompt may not refresh, commands will still work.\n", getpid(), nJobs, cmd.args[0]);
     exec_cmd(cmd);
-    printf("\n\n[%d] %d %s finished\n\n%s > ", getpid(), nJobs, cmd.args[0], myCwd);
+    printf("\n\n[%d] %d %s - finished\n\n", getpid(), nJobs, cmd.args[0]);
 
-    kill(getpid(), -9); //KILL SIG 9
+    //Reprint prompt if process finishes
+    printf("%s > ", myCwd);
+
     exit(0);
   } else {
     //Copy command string into job
@@ -265,13 +269,28 @@ void run_in_background(command_t cmd) {
   }
 }
 
-void printJobs() {
+void print_jobs() {
   printf("[PID #]\tJID# CMD\n");
   for (size_t i = 0; i < nJobs; ++i) {
-    // TODO: Commented because does not properly check for running processes
-    //       Better to print all (inc. zombie) processes.
-    // if (kill(jobs[i].jid, 0) == i)
+    if (kill(jobs[i].jid, 0) == 0) {
       printf("[%d]  %d  %s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
+    } else {
+      printf(strerror(errno));
+    }
+  }
+}
+
+void kill_ps(char* pid) {
+  char* endptr;
+  size_t kpid = strtoimax(pid, &endptr, 10);
+  for (size_t i = 0; i < nJobs; ++i) {
+    if (jobs[i].pid == kpid) {
+      if(kill(jobs[i].jid, SIGKILL) == 0) {
+        printf("Killed [%d] %ld successfully!\n", jobs[i].jid, kpid);
+      } else {
+        printf(strerror(errno));
+      }
+    }
   }
 }
 

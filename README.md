@@ -17,4 +17,4 @@ Written by Cyrus Duong and Alvin Cheung
 ###### Extras
 
 - [ ] Allow multiple (2+) pipe chaining.
-- [ ] Implementation of kill command to signal background processes
+- [x] Implementation of kill command to signal background processes via JID
