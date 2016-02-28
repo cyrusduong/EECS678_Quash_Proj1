@@ -241,15 +241,12 @@ void run_in_background(command_t cmd) {
       printf("Failed to create child process\n");
       exit(EXIT_FAILURE);
     }
-
-    printf("\n[%d] %d is running in the background\n", getpid(), *nJobs);
-    exec_cmd(cmd);
-    printf("\n[%d] finished\n\n", getpid());
-
-    //Refresh prompt
+    //Read currentDir
     getcwd(myCwd, 1024); //Find path upto 1024.
-    //Command Indicator
-    printf("%s > ", myCwd);
+
+    printf("\n\n[%d] %d %s is running in the background\n", getpid(), *nJobs, cmd.args[0]);
+    exec_cmd(cmd);
+    printf("\n\n[%d] %d %s finished\n\n%s > ", getpid(), *nJobs, cmd.args[0], myCwd);
 
     kill(getpid(), -9); //KILL SIG 9
     exit(0);
@@ -268,6 +265,7 @@ void run_in_background(command_t cmd) {
 }
 
 void printJobs() {
+  printf("%u jobs found.\n", *nJobs);
   for (size_t i = 0; i < *nJobs; ++i) {
     if (kill(jobs[i].pid, 0) == 0) {
       printf("[%d]  %d  %s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
