@@ -133,7 +133,7 @@ void print_jobs();
 /**
  *  Kills the jobs by PID in background
 */
-void kill_ps(char* pid);
+void kill_ps(char* sig, char* pid);
 
 
 #endif // QUASH_H
