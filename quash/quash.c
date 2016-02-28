@@ -103,10 +103,18 @@ void change_dir(char* path) {
 }
 
 void exec_cmd(command_t cmd) {
+  int redirectFlag = 0;
+  int pipeFlag = 0;
+  for (int i = 0; i < cmd.nArgs; i++) {
+    printf("\nArgument at [%u] is = %s\n", i, cmd.args[i]);
+  }
   for (int i = 0; i < cmd.nArgs; i++) {
     if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
-      file_redirection(cmd);
-      return;
+      redirectFlag = 1;
+      break;
+    } else if (!strcmp(cmd.args[i], "|")) {
+      pipeFlag = 1;
+      break;
     }
   }
 
@@ -115,6 +123,10 @@ void exec_cmd(command_t cmd) {
     cmd.args[cmd.nArgs-1] = "";
     --cmd.nArgs;
     run_in_background(cmd);
+  } else if (redirectFlag) {
+    file_redirection(cmd);
+  } else if (pipeFlag) {
+    pipe_execution(cmd);
   } else if (!strcmp(cmd.cmdstr, "exit")) {
     terminate(); // Exit Quash
   } else if (!strcmp(cmd.cmdstr, "quit")) {
@@ -362,6 +374,90 @@ void file_redirection(command_t cmd) {
     if (status == 1) {
       fprintf(stderr, "%s", "Error");
     }
+  }
+}
+
+void pipe_execution(command_t cmd) {
+
+  size_t redirLoc = 0;
+
+  // Find index of > or <
+  for (int i = 0; i < cmd.nArgs; i++) {
+    if (!strcmp(cmd.args[i], "|")) {
+      redirLoc = i;
+    }
+  }
+
+  // Allocate space for copy of lhsTokens and rhsTokens
+  char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+
+  struct command_t lhsCommand = {
+    .cmdstr = lhsTokens[0],
+    .args = lhsTokens,
+    .nArgs = redirLoc
+  };
+
+  struct command_t rhsCommand = {
+    .cmdstr = rhsTokens[0],
+    .args = rhsTokens,
+    .nArgs = redirLoc
+  };
+
+
+  // Set the tokens in first half to lhsTokens - upto <, >
+  for (size_t i = 0; i < redirLoc; i++) {
+    lhsTokens[i] = cmd.args[i];
+  }
+
+  // Set the tokens in latter half to rhsTokens - past <, >
+  for (size_t i = redirLoc + 1; i < cmd.nArgs; i++) {
+    rhsTokens[i - (redirLoc + 1)] = cmd.args[i];
+  }
+
+  for (size_t i = 0; i < (cmd.nArgs - redirLoc); i++) {
+    printf("\nRHS Tokens at [%u] = %s\n", i, rhsTokens[i]);
+  }
+
+  pid_t pid_1, pid_2;
+  int fd[2], status;
+
+  pipe(fd);
+  pid_1 = fork();
+  if (pid_1 == 0) {
+    dup2(fd[1], STDOUT_FILENO);
+    close(fd[0]);
+    close(fd[1]);
+
+    // Execute the program
+    if (execvp(lhsTokens[0], lhsTokens) < 0) {
+      printf("%s: No such file, directory, or command\n", lhsTokens[0]);
+      exit(-1);
+    }
+    exit(0);
+  }
+
+  pid_2 = fork();
+  if (pid_2 == 0) {
+    dup2(fd[0], STDIN_FILENO);
+    close(fd[0]);
+    close(fd[1]);
+
+    fflush(stdout);
+    if (execvp(rhsTokens[0], rhsTokens) < 0) {
+      printf("%s: No such file, directory, or command\n", rhsTokens[0]);
+      exit(-1);
+    }
+    exit(0);
+  }
+  close(fd[0]);
+  close(fd[1]);
+
+  if ((waitpid(pid_1, &status, 0)) == -1) {
+    fprintf(stderr, "Process 1 Encountered an Error%d\n", errno);
+  }
+  if ((waitpid(pid_2, &status, 0)) == -1) {
+    fprintf(stderr, "Process 2 Encountered an Error%d\n", errno);
   }
 }
 
