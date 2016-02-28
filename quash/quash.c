@@ -121,7 +121,7 @@ void exec_cmd(command_t cmd) {
   } else if (!strcmp(cmd.cmdstr, "jobs")) {
     print_jobs();
   } else if (!strcmp(cmd.cmdstr, "kill")) {
-    kill_ps(cmd.args[1]);
+    kill_ps(cmd.args[1], cmd.args[2]);
   } else {
     exec_extern(cmd);
   }
@@ -280,13 +280,14 @@ void print_jobs() {
   }
 }
 
-void kill_ps(char* pid) {
+void kill_ps(char* sig, char* pid) {
   char* endptr;
+  size_t ksig = strtoimax(sig, &endptr, 10);
   size_t kpid = strtoimax(pid, &endptr, 10);
   for (size_t i = 0; i < nJobs; ++i) {
     if (jobs[i].pid == kpid) {
-      if(kill(jobs[i].jid, SIGKILL) == 0) {
-        printf("Killed [%d] %ld successfully!\n", jobs[i].jid, kpid);
+      if(kill(jobs[i].jid, ksig) == 0) {
+        printf("Killed [%d] %ld successfully with signal %ld!\n", jobs[i].jid, kpid, ksig);
       } else {
         printf(strerror(errno));
       }
