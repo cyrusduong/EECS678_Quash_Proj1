@@ -243,14 +243,13 @@ void run_in_background(command_t cmd) {
     //Read currentDir
     getcwd(myCwd, 1024); //Find path upto 1024.
 
-    printf("\n\n[%d] %d %s is running in the background\n", getpid(), nJobs, cmd.args[0]);
+    printf("\n\n[%d] %d %s - running. Prompt may not refresh, commands will still work.\n", getpid(), nJobs, cmd.args[0]);
     exec_cmd(cmd);
-    printf("\n\n[%d] %d %s finished\n\n", getpid(), nJobs, cmd.args[0]);
+    printf("\n\n[%d] %d %s - finished\n\n", getpid(), nJobs, cmd.args[0]);
 
     //Reprint prompt if process finishes
     printf("%s > ", myCwd);
 
-    kill(getpid(), SIGKILL); //KILL SIG 9
     exit(0);
   } else {
     //Copy command string into job
