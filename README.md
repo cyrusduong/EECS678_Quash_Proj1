@@ -8,9 +8,9 @@ Written by Cyrus Duong and Alvin Cheung
 - [x] Quit shell using quit or exit
 - [x] Implemented cd and pwd
 - [x] PATH works properly, gives error when executable is not found.
-- [ ] Child process inheritance (inherit environment variables)
-- [ ] Allow background execution using (&)
-- [ ] Printing/Reporting of background processes, (including jobs command)
+- [x] Child process inheritance (inherit environment variables)
+- [x] Allow background execution using (&)
+- [x] Printing/Reporting of background processes, (including jobs command)
 - [ ] Allow file redirection (> and <)
 - [ ] Allow (1) pipe redirection
 
