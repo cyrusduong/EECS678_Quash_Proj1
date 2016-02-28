@@ -106,7 +106,7 @@ void exec_cmd(command_t cmd) {
   for (int i = 0; i < cmd.nArgs; i++) {
     if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
       file_redirection(cmd);
-      break;
+      return;
     }
   }
 
@@ -304,83 +304,65 @@ void kill_ps(char* pid) {
 }
 
 void file_redirection(command_t cmd) {
-  int flag = 0;
-  int directionIndex = 0;
-  char* current_cmd = NULL;
-  current_cmd = realloc(current_cmd, sizeof(char*) * cmd.nArgs);
+  size_t redirLoc = 0;
 
-  for (int i = 0; i < cmd.nArgs; i++) {
-    strcat(current_cmd, cmd.args[i]);
-  }
-
-  char* first_token = NULL;
-
-  // Find > or <
+  // Find index of > or <
   for (int i = 0; i < cmd.nArgs; i++) {
     if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
-      directionIndex = i;
+      redirLoc = i;
     }
   }
 
-  if (!strcmp(cmd.args[directionIndex], ">")) {
-    flag = 1;
-    first_token = strtok(current_cmd, ">");
-  } else if (!strcmp(cmd.args[directionIndex], "<")) {
-    flag = 0;
-    first_token = strtok(current_cmd, "<");
+  // Allocate space for copy of lhsTokens and rhsTokens
+  char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+
+  // Set the tokens in first half to lhsTokens - upto <, >
+  for (size_t i = 0; i < redirLoc; i++) {
+    lhsTokens[i] = cmd.args[i];
   }
 
-  int noft = 0;
-  // int nost = 0;
-  char* second_token = strtok(NULL, "\n");
-  char** first_tokens = tokenize(first_token, &noft);
-  //char** second_tokens = tokenize(second_token, &nost);
-
-  for (int i = 0; i < noft; ++i) {
-    printf("First tokens [%u] is %s\n", i, first_tokens[i]);
+  // Set the tokens in latter half to rhsTokens - past <, >
+  for (size_t i = redirLoc + 1; i < cmd.nArgs; i++) {
+    rhsTokens[i - (redirLoc + 1)] = cmd.args[i];
   }
 
-  printf("First token:%s \nSecond token:%s\n", first_token, second_token);
+  // Find if '>' or '<'
+  bool flag = (strcmp(cmd.args[redirLoc], ">") == 0);
 
-  pid_t pid;
-  pid = fork();
-  int fd1[2], fd2[2];
-  pipe(fd1);
-  pipe(fd2);
-  if (pid < 0) {
-    //error
-  }
-  else if (pid == 0) {
-    if (flag) {
-      fd1[0] = open(first_token, O_RDWR, 0);
-      dup2(fd1[0], STDIN_FILENO);
-      close(fd1[1]);
+  pid_t pid = fork();
+  int status;
+
+  if (pid == 0) { //Child
+    // Flush stio
+    fflush(0);
+    if (flag) { // > found
+      // Open file
+      int fd = open(rhsTokens[0], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      dup2(fd, STDOUT_FILENO); //stdout - REDIRECT to STDOUT
+      close(fd); //Close file descriptor so dup2/stdout can use (?)
+      // Child now has stdout going to output file, execute.
+    } else { // < found
+      // Open file, push to STDIN
+      int fd = open(rhsTokens[0], O_RDONLY);
+      dup2(fd, STDIN_FILENO); // stdin - REDIRECT to STDIN
+      close(fd); // Close file descriptor so dup2/stdin can use
+      // Child now has stdin coming from input file, execute.
     }
 
-    if (!flag) {
-      fd2[1] = creat(second_token, O_RDWR);
-      dup2(fd2[1], STDOUT_FILENO);
-      close(fd2[0]);
+    // Regular execution of lefthand side
+    if (execvp(lhsTokens[0], lhsTokens) < 0) {
+      printf("%s: No such file, directory, or command\n", lhsTokens[0]);
+      exit(-1);
     }
-
-    if (execvp("./HelloWorld2", "") == 0) { 
-      printf("We good dawg\n");
-    } else {
-      printf("'%s'\n", strerror(errno));
+  } else { 
+    //Parent wait for completion.
+    waitpid(pid, &status, 0);
+    if (status == 1) {
+      fprintf(stderr, "%s", "Error");
     }
-
-    close(fd1[0]);
-    close(fd1[1]);
-    close(fd2[0]);
-    close(fd2[1]);
-
-    exit(1);
-  } else {
-    // Wait for child to DIE. DIEEE!
-    while(waitid(P_PID, pid, NULL, WEXITED | WNOHANG) > 0) {}
   }
 }
-
 
 /**
  * Quash entry point
