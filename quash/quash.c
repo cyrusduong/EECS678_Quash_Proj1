@@ -245,7 +245,10 @@ void run_in_background(command_t cmd) {
 
     printf("\n\n[%d] %d %s is running in the background\n", getpid(), nJobs, cmd.args[0]);
     exec_cmd(cmd);
-    printf("\n\n[%d] %d %s finished\n\n%s > ", getpid(), nJobs, cmd.args[0], myCwd);
+    printf("\n\n[%d] %d %s finished\n\n", getpid(), nJobs, cmd.args[0]);
+
+    //Reprint prompt if process finishes
+    printf("%s > ", myCwd);
 
     kill(getpid(), SIGKILL); //KILL SIG 9
     exit(0);
@@ -270,10 +273,11 @@ void run_in_background(command_t cmd) {
 void print_jobs() {
   printf("[PID #]\tJID# CMD\n");
   for (size_t i = 0; i < nJobs; ++i) {
-    // TODO: Commented because does not properly check for running processes
-    //       Better to print all (inc. zombie) processes.
-    if (kill(jobs[i].jid, 0) == 0)
+    if (kill(jobs[i].jid, 0) == 0) {
       printf("[%d]  %d  %s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
+    } else {
+      printf(strerror(errno));
+    }
   }
 }
 
@@ -286,7 +290,7 @@ void kill_ps(char* pid) {
         printf("Killed [%d] %ld successfully!\n", jobs[i].jid, kpid);
       } else {
         printf(strerror(errno));
-      };
+      }
     }
   }
 }
