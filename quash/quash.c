@@ -103,7 +103,7 @@ void change_dir(char* path) {
 }
 
 void exec_cmd(command_t cmd) {
-  if (!strcmp(cmd.args[cmd.nArgs-1], "&")) {
+  if (cmd.nArgs > 1 && !strcmp(cmd.args[cmd.nArgs-1], "&")) {
     //Parse out '&'
     cmd.args[cmd.nArgs-1] = "";
     --cmd.nArgs;
@@ -242,10 +242,14 @@ void run_in_background(command_t cmd) {
       exit(EXIT_FAILURE);
     }
 
-    printf("[%d] %d is running in the background\n", *nJobs, getpid());
-    printf("%s has %u args\n", cmd.cmdstr, cmd.nArgs);
+    printf("\n[%d] %d is running in the background\n", getpid(), *nJobs);
     exec_cmd(cmd);
-    printf("\n[%d] finished\n", getpid());
+    printf("\n[%d] finished\n\n", getpid());
+
+    //Refresh prompt
+    getcwd(myCwd, 1024); //Find path upto 1024.
+    //Command Indicator
+    printf("%s > ", myCwd);
 
     kill(getpid(), -9); //KILL SIG 9
     exit(0);
@@ -266,7 +270,7 @@ void run_in_background(command_t cmd) {
 void printJobs() {
   for (size_t i = 0; i < *nJobs; ++i) {
     if (kill(jobs[i].pid, 0) == 0) {
-      printf("[%d]\t%d\t%s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
+      printf("[%d]  %d  %s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
     }
   }
 }
