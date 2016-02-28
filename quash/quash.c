@@ -318,9 +318,11 @@ void kill_ps(char* sig, char* pid) {
 }
 
 void file_redirection(command_t cmd, int redirLoc) {
+  char** lhsTokens = NULL;
+  char** rhsTokens = NULL;
   // Allocate space for copy of lhsTokens and rhsTokens
-  char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
-  char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+  lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
 
   // Set the tokens in first half to lhsTokens - upto <, >
   for (size_t i = 0; i < redirLoc; i++) {
@@ -370,9 +372,11 @@ void file_redirection(command_t cmd, int redirLoc) {
 }
 
 void pipe_execution(command_t cmd, int redirLoc) {
+  char** lhsTokens = NULL;
+  char** rhsTokens = NULL;
   // Allocate space for copy of lhsTokens and rhsTokens
-  char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
-  char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+  lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
 
   // Set the tokens in first half to lhsTokens - upto <, >
   for (size_t i = 0; i < redirLoc; i++) {
@@ -387,12 +391,6 @@ void pipe_execution(command_t cmd, int redirLoc) {
     strcpy(rhsTokens[j], cmd.args[i]);
     j++;
   }
-
-  struct command_t lhsCommand = {
-    .cmdstr = lhsTokens[0],
-    .args = lhsTokens,
-    .nArgs = redirLoc
-  };
 
   struct command_t rhsCommand = {
     .cmdstr = rhsTokens[0],
@@ -427,10 +425,6 @@ void pipe_execution(command_t cmd, int redirLoc) {
     close(fd[1]);
 
     fflush(stdout);
-    // if (execvp(rhsTokens[0], rhsTokens) < 0) {
-    //   printf("%s: No such file, directory, or command\n", rhsTokens[0]);
-    //   exit(-1);
-    // }
     exec_cmd(rhsCommand);
     exit(0);
   }
