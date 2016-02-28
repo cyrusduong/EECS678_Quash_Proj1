@@ -14,6 +14,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /**************************************************************************
  * Private Variables
@@ -101,6 +103,13 @@ void change_dir(char* path) {
 }
 
 void exec_cmd(command_t cmd) {
+  for (int i = 0; i < cmd.nArgs; i++) {
+    if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
+      file_redirection(cmd);
+      return;
+    }
+  }
+
   if (cmd.nArgs > 1 && !strcmp(cmd.args[cmd.nArgs-1], "&")) {
     //Parse out '&'
     cmd.args[cmd.nArgs-1] = "";
@@ -291,6 +300,67 @@ void kill_ps(char* sig, char* pid) {
       } else {
         printf(strerror(errno));
       }
+    }
+  }
+}
+
+void file_redirection(command_t cmd) {
+  size_t redirLoc = 0;
+
+  // Find index of > or <
+  for (int i = 0; i < cmd.nArgs; i++) {
+    if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
+      redirLoc = i;
+    }
+  }
+
+  // Allocate space for copy of lhsTokens and rhsTokens
+  char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
+  char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+
+  // Set the tokens in first half to lhsTokens - upto <, >
+  for (size_t i = 0; i < redirLoc; i++) {
+    lhsTokens[i] = cmd.args[i];
+  }
+
+  // Set the tokens in latter half to rhsTokens - past <, >
+  for (size_t i = redirLoc + 1; i < cmd.nArgs; i++) {
+    rhsTokens[i - (redirLoc + 1)] = cmd.args[i];
+  }
+
+  // Find if '>' or '<'
+  bool flag = (strcmp(cmd.args[redirLoc], ">") == 0);
+
+  pid_t pid = fork();
+  int status;
+
+  if (pid == 0) { //Child
+    // Flush stio
+    fflush(0);
+    if (flag) { // > found
+      // Open file
+      int fd = open(rhsTokens[0], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+      dup2(fd, STDOUT_FILENO); //stdout - REDIRECT to STDOUT
+      close(fd); //Close file descriptor so dup2/stdout can use (?)
+      // Child now has stdout going to output file, execute.
+    } else { // < found
+      // Open file, push to STDIN
+      int fd = open(rhsTokens[0], O_RDONLY);
+      dup2(fd, STDIN_FILENO); // stdin - REDIRECT to STDIN
+      close(fd); // Close file descriptor so dup2/stdin can use
+      // Child now has stdin coming from input file, execute.
+    }
+
+    // Regular execution of lefthand side
+    if (execvp(lhsTokens[0], lhsTokens) < 0) {
+      printf("%s: No such file, directory, or command\n", lhsTokens[0]);
+      exit(-1);
+    }
+  } else { 
+    //Parent wait for completion.
+    waitpid(pid, &status, 0);
+    if (status == 1) {
+      fprintf(stderr, "%s", "Error");
     }
   }
 }
