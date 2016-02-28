@@ -105,15 +105,16 @@ void change_dir(char* path) {
 void exec_cmd(command_t cmd) {
   int redirectFlag = 0;
   int pipeFlag = 0;
-  for (int i = 0; i < cmd.nArgs; i++) {
-    printf("\nArgument at [%u] is = %s\n", i, cmd.args[i]);
-  }
+  int redirLoc = 0;
+
   for (int i = 0; i < cmd.nArgs; i++) {
     if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
       redirectFlag = 1;
+      redirLoc = i;
       break;
     } else if (!strcmp(cmd.args[i], "|")) {
       pipeFlag = 1;
+      redirLoc = i;
       break;
     }
   }
@@ -124,9 +125,9 @@ void exec_cmd(command_t cmd) {
     --cmd.nArgs;
     run_in_background(cmd);
   } else if (redirectFlag) {
-    file_redirection(cmd);
+    file_redirection(cmd, redirLoc);
   } else if (pipeFlag) {
-    pipe_execution(cmd);
+    pipe_execution(cmd, redirLoc);
   } else if (!strcmp(cmd.cmdstr, "exit")) {
     terminate(); // Exit Quash
   } else if (!strcmp(cmd.cmdstr, "quit")) {
@@ -316,16 +317,7 @@ void kill_ps(char* sig, char* pid) {
   }
 }
 
-void file_redirection(command_t cmd) {
-  size_t redirLoc = 0;
-
-  // Find index of > or <
-  for (int i = 0; i < cmd.nArgs; i++) {
-    if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
-      redirLoc = i;
-    }
-  }
-
+void file_redirection(command_t cmd, int redirLoc) {
   // Allocate space for copy of lhsTokens and rhsTokens
   char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
   char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
@@ -377,20 +369,24 @@ void file_redirection(command_t cmd) {
   }
 }
 
-void pipe_execution(command_t cmd) {
-
-  size_t redirLoc = 0;
-
-  // Find index of > or <
-  for (int i = 0; i < cmd.nArgs; i++) {
-    if (!strcmp(cmd.args[i], "|")) {
-      redirLoc = i;
-    }
-  }
-
+void pipe_execution(command_t cmd, int redirLoc) {
   // Allocate space for copy of lhsTokens and rhsTokens
   char** lhsTokens = realloc( lhsTokens, sizeof(char*) * redirLoc);
   char** rhsTokens = realloc( rhsTokens, sizeof(char*) * (cmd.nArgs - redirLoc));
+
+  // Set the tokens in first half to lhsTokens - upto <, >
+  for (size_t i = 0; i < redirLoc; i++) {
+    lhsTokens[i] = cmd.args[i];
+  }
+
+  // Set the tokens in latter half to rhsTokens - past <, >
+  int j = 0;
+  for (size_t i = redirLoc + 1; i < cmd.nArgs; i++) {
+    //Copy command string into jobmak
+    rhsTokens[j] = (char*) malloc((strlen(cmd.args[i]) + 1) * sizeof(char));
+    strcpy(rhsTokens[j], cmd.args[i]);
+    j++;
+  }
 
   struct command_t lhsCommand = {
     .cmdstr = lhsTokens[0],
@@ -401,23 +397,10 @@ void pipe_execution(command_t cmd) {
   struct command_t rhsCommand = {
     .cmdstr = rhsTokens[0],
     .args = rhsTokens,
-    .nArgs = redirLoc
+    .nArgs = (cmd.nArgs - redirLoc)
   };
 
-
-  // Set the tokens in first half to lhsTokens - upto <, >
-  for (size_t i = 0; i < redirLoc; i++) {
-    lhsTokens[i] = cmd.args[i];
-  }
-
-  // Set the tokens in latter half to rhsTokens - past <, >
-  for (size_t i = redirLoc + 1; i < cmd.nArgs; i++) {
-    rhsTokens[i - (redirLoc + 1)] = cmd.args[i];
-  }
-
-  for (size_t i = 0; i < (cmd.nArgs - redirLoc); i++) {
-    printf("\nRHS Tokens at [%u] = %s\n", i, rhsTokens[i]);
-  }
+  strcpy(rhsCommand.cmdstr, rhsTokens[0]);
 
   pid_t pid_1, pid_2;
   int fd[2], status;
@@ -448,6 +431,7 @@ void pipe_execution(command_t cmd) {
       printf("%s: No such file, directory, or command\n", rhsTokens[0]);
       exit(-1);
     }
+    //exec_cmd(rhsCommand);
     exit(0);
   }
   close(fd[0]);

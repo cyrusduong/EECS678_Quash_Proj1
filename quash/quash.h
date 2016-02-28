@@ -138,7 +138,7 @@ void kill_ps(char* sig, char* pid);
  *  @param cmd - The entire command variable
  *
 */
-void file_redirection(command_t cmd);
+void file_redirection(command_t cmd, int redirLoc);
 
 /**
  *  Handles execution piping with |
@@ -146,6 +146,6 @@ void file_redirection(command_t cmd);
  *  @param cmd - The entire command variable
  *
 */
-void pipe_execution(command_t cmd);
+void pipe_execution(command_t cmd, int redirLoc);
 
 #endif // QUASH_H
