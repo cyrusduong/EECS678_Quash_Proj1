@@ -128,7 +128,7 @@ void run_in_background(command_t cmd);
 /**
  *  Prints the jobs in background
 */
-void printJobs();
+void print_jobs();
 
 /**
  *  Kills the jobs by PID in background

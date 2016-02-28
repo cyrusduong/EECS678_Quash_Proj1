@@ -119,7 +119,7 @@ void exec_cmd(command_t cmd) {
   } else if (!strcmp(cmd.cmdstr, "echo")) {
     echo_var(cmd.args[1]);
   } else if (!strcmp(cmd.cmdstr, "jobs")) {
-    printJobs();
+    print_jobs();
   } else if (!strcmp(cmd.cmdstr, "kill")) {
     kill_ps(cmd.args[1]);
   } else {
@@ -267,7 +267,7 @@ void run_in_background(command_t cmd) {
   }
 }
 
-void printJobs() {
+void print_jobs() {
   printf("[PID #]\tJID# CMD\n");
   for (size_t i = 0; i < nJobs; ++i) {
     // TODO: Commented because does not properly check for running processes
