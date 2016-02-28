@@ -103,6 +103,13 @@ void change_dir(char* path) {
 }
 
 void exec_cmd(command_t cmd) {
+  for (int i = 0; i < cmd.nArgs; i++) {
+    if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
+      file_redirection(cmd);
+      break;
+    }
+  }
+
   if (cmd.nArgs > 1 && !strcmp(cmd.args[cmd.nArgs-1], "&")) {
     //Parse out '&'
     cmd.args[cmd.nArgs-1] = "";
@@ -298,39 +305,75 @@ void kill_ps(char* pid) {
 
 void file_redirection(command_t cmd) {
   int flag = 0;
-  char* current_cmd = strdup(*cmd.args);
-  char* first_arg = NULL;
+  int directionIndex = 0;
+  char* current_cmd = NULL;
+  current_cmd = realloc(current_cmd, sizeof(char*) * cmd.nArgs);
 
-  if (!strcmp(cmd.args[2], ">")) {
-    flag = 1;
-    first_arg = strtok(current_cmd, ">");
-  } else if (!strcmp(cmd.args[2], "<")) {
-    flag = 0;
-    first_arg = strtok(current_cmd, "<");
+  for (int i = 0; i < cmd.nArgs; i++) {
+    strcat(current_cmd, cmd.args[i]);
   }
 
-  char* second_arg = strtok(NULL, "\n");
-  
+  char* first_token = NULL;
+
+  // Find > or <
+  for (int i = 0; i < cmd.nArgs; i++) {
+    if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
+      directionIndex = i;
+    }
+  }
+
+  if (!strcmp(cmd.args[directionIndex], ">")) {
+    flag = 1;
+    first_token = strtok(current_cmd, ">");
+  } else if (!strcmp(cmd.args[directionIndex], "<")) {
+    flag = 0;
+    first_token = strtok(current_cmd, "<");
+  }
+
+  int noft = 0;
+  // int nost = 0;
+  char* second_token = strtok(NULL, "\n");
+  char** first_tokens = tokenize(first_token, &noft);
+  //char** second_tokens = tokenize(second_token, &nost);
+
+  for (int i = 0; i < noft; ++i) {
+    printf("First tokens [%u] is %s\n", i, first_tokens[i]);
+  }
+
+  printf("First token:%s \nSecond token:%s\n", first_token, second_token);
+
   pid_t pid;
   pid = fork();
-  int fd1, fd2;
+  int fd1[2], fd2[2];
+  pipe(fd1);
+  pipe(fd2);
   if (pid < 0) {
     //error
   }
   else if (pid == 0) {
-    if (flag) { // >
-      fd1 = open(first_arg, O_RDONLY, 0);
-      dup2(fd1, STDIN_FILENO);
-      close(fd1);
+    if (flag) {
+      fd1[0] = open(first_token, O_RDWR, 0);
+      dup2(fd1[0], STDIN_FILENO);
+      close(fd1[1]);
     }
 
-    if (!flag) { // <
-      fd2 = creat(second_arg, O_RDWR);
-      dup2(fd2, STDOUT_FILENO);
-      close(fd2);
+    if (!flag) {
+      fd2[1] = creat(second_token, O_RDWR);
+      dup2(fd2[1], STDOUT_FILENO);
+      close(fd2[0]);
     }
 
-    execvp(cmd.args[0], cmd.args);
+    if (execvp("./HelloWorld2", "") == 0) { 
+      printf("We good dawg\n");
+    } else {
+      printf("'%s'\n", strerror(errno));
+    }
+
+    close(fd1[0]);
+    close(fd1[1]);
+    close(fd2[0]);
+    close(fd2[1]);
+
     exit(1);
   } else {
     // Wait for child to DIE. DIEEE!
