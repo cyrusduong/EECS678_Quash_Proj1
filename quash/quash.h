@@ -107,7 +107,6 @@ void set_var(char* var, char* val);
 void echo_var(char* var);
 
 /**
-<<<<<<< HEAD
  *  Run external commands/programs with or without parameters
  *
  * @ param cmd - The entire command variable
@@ -115,8 +114,6 @@ void echo_var(char* var);
 void exec_extern(command_t cmd);
 
 /**
-=======
->>>>>>> refs/remotes/origin/run-in-background
  *  Runs an executable in background while adding it to the jobs list
  *  Keeps track of background process.
  *
@@ -135,5 +132,20 @@ void print_jobs();
 */
 void kill_ps(char* sig, char* pid);
 
+/**
+ *  Handles file redirection with > or <
+ *
+ *  @param cmd - The entire command variable
+ *
+*/
+void file_redirection(command_t cmd, int redirLoc);
+
+/**
+ *  Handles execution piping with |
+ *
+ *  @param cmd - The entire command variable
+ *
+*/
+void pipe_execution(command_t cmd, int redirLoc);
 
 #endif // QUASH_H
