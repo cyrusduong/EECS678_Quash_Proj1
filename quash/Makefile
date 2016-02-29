@@ -1,7 +1,7 @@
 STUDENTID = XXXXXXX
 PROGNAME = quash
 
-CC = gcc --std=c99
+CC = gcc --std=gnu99
 CFLAGS = -Wall -g -Og
 
 
