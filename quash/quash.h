@@ -128,6 +128,11 @@ void run_in_background(command_t cmd);
 void print_jobs();
 
 /**
+ *  Flushes zombie/finished processes from the jobs list.
+*/
+void flush_jobs();
+
+/**
  *  Kills the jobs by PID in background
 */
 void kill_ps(char* sig, char* pid);

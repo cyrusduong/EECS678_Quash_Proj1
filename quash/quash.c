@@ -38,7 +38,7 @@ char *envPath;
 
 //Define structure of a job
 struct job {
-    int jid;
+    pid_t jid;
     int pid;
     char *com;
 };
@@ -256,7 +256,7 @@ void run_in_background(command_t cmd) {
   pid_t pid, sid;
   pid = fork();
   if (pid == 0) {
-    sid = setsid();
+    // sid = setsid();
 
     if (sid < 0) {
       printf("Failed to create child process\n");
@@ -292,13 +292,18 @@ void run_in_background(command_t cmd) {
 }
 
 void print_jobs() {
+  flush_jobs();
   printf("[PID #]\tJID# CMD\n");
   for (size_t i = 0; i < nJobs; ++i) {
     if (kill(jobs[i].jid, 0) == 0) {
-      printf("[%d]  %d  %s\n", jobs[i].jid, jobs[i].pid, jobs[i].com);
-    } else {
-      printf(strerror(errno));
+      printf("[%d]    %d  %s\n", jobs[i].pid, jobs[i].jid, jobs[i].com);
     }
+  }
+}
+
+void flush_jobs() {
+  for (size_t i = 0; i < nJobs; ++i) {
+    waitpid(jobs[i].jid, NULL, WNOHANG);
   }
 }
 
@@ -362,7 +367,7 @@ void file_redirection(command_t cmd, int redirLoc) {
       printf("%s: No such file, directory, or command\n", lhsTokens[0]);
       exit(-1);
     }
-  } else { 
+  } else {
     //Parent wait for completion.
     waitpid(pid, &status, 0);
     if (status == 1) {
