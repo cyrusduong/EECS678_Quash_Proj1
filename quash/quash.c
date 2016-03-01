@@ -107,6 +107,13 @@ void exec_cmd(command_t cmd) {
   int pipeFlag = 0;
   int redirLoc = 0;
 
+  if (cmd.nArgs > 1 && !strcmp(cmd.args[cmd.nArgs-1], "&")) {
+    //Parse out '&'
+    cmd.args[cmd.nArgs-1] = "";
+    --cmd.nArgs;
+    run_in_background(cmd);
+  }
+
   for (int i = 0; i < cmd.nArgs; i++) {
     if (!strcmp(cmd.args[i], ">") || !strcmp(cmd.args[i], "<")) {
       redirectFlag = 1;
@@ -119,12 +126,7 @@ void exec_cmd(command_t cmd) {
     }
   }
 
-  if (cmd.nArgs > 1 && !strcmp(cmd.args[cmd.nArgs-1], "&")) {
-    //Parse out '&'
-    cmd.args[cmd.nArgs-1] = "";
-    --cmd.nArgs;
-    run_in_background(cmd);
-  } else if (redirectFlag) {
+   if (redirectFlag) {
     file_redirection(cmd, redirLoc);
   } else if (pipeFlag) {
     pipe_execution(cmd, redirLoc);

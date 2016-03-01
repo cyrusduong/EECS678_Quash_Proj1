@@ -20,4 +20,3 @@
 /// Does not add debug exclusive code
 #  define IFDEBUG(x)
 #endif
-
